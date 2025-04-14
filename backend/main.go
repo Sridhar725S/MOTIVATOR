@@ -4,12 +4,14 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"math/rand"
 	"net/http"
 )
 
 //go:embed static/*
-var staticFiles embed.FS
+var embeddedFiles embed.FS
+
 var quotes = []string{
 	"You got this! 💪",
 	"Keep going, code slayer!",
@@ -36,17 +38,22 @@ func quoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fs := http.FileServer(http.FS(staticFiles))
-	http.Handle("/", fs)
+	// Serve static files (like main.js, CSS, etc.)
+	staticFS, _ := fs.Sub(embeddedFiles, "static")
+	fsHandler := http.FileServer(http.FS(staticFS))
+
+	// Handle API
 	http.HandleFunc("/api/quote", quoteHandler)
 
-	// Catch-all route to serve the index.html file for non-API requests
+	// Serve frontend files and fallback to index.html
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/quote" {
-			http.ServeFile(w, r, "./static/index.html")
+		if r.URL.Path == "/" {
+			http.ServeFile(w, r, "static/index.html")
+			return
 		}
+		fsHandler.ServeHTTP(w, r)
 	})
 
-	fmt.Println("Server is started")
+	fmt.Println("🚀 Server is running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
