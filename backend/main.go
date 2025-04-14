@@ -10,7 +10,7 @@ import (
 )
 
 //go:embed static/*
-var embeddedFiles embed.FS
+var staticFiles embed.FS 
 
 var quotes = []string{
 	"You got this! 💪",
