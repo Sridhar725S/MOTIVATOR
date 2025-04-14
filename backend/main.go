@@ -9,7 +9,7 @@ import (
 )
 
 //go:embed static/*
-var staticFiles embed.FS 
+var embeddedFiles embed.FS
 
 var quotes = []string{
 	"You got this! 💪",
@@ -37,23 +37,23 @@ func quoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Serve static files under /static/
-	staticFS := http.FileServer(http.FS(staticFiles))
-	http.Handle("/static/", http.StripPrefix("/static/", staticFS))
+	// Serve static files correctly with MIME types
+	staticFS := http.FS(embeddedFiles)
+	fileServer := http.FileServer(staticFS)
 
-	// Serve index.html for root or unknown routes
+	http.Handle("/static/", http.StripPrefix("/static/", fileServer))
+	http.HandleFunc("/api/quote", quoteHandler)
+
+	// Serve index.html for root path
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		filePath := "static/index.html"
-		data, err := staticFiles.ReadFile(filePath)
+		f, err := embeddedFiles.Open("static/index.html")
 		if err != nil {
-			http.Error(w, "Index file not found 💥", 500)
+			http.Error(w, "Index not found 💀", http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "text/html")
-		w.Write(data)
+		stat, _ := f.Stat()
+		http.ServeContent(w, r, stat.Name(), stat.ModTime(), f)
 	})
-
-	http.HandleFunc("/api/quote", quoteHandler)
 
 	fmt.Println("🚀 Motivator 3000 server running on :8080")
 	http.ListenAndServe(":8080", nil)
