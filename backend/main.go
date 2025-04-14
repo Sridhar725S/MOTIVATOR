@@ -45,14 +45,21 @@ func main() {
 	fsHandler := http.FileServer(http.FS(staticFS))
 
 	http.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
-		data, err := embeddedFiles.ReadFile("static/manifest.json")
-		if err != nil {
-			http.NotFound(w, r)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(data)
-	})
+    data, err := embeddedFiles.ReadFile("static/manifest.json")
+    if err != nil {
+        http.NotFound(w, r)
+        return
+    }
+
+    // Replace image paths with /static/ versions
+    manifestStr := strings.ReplaceAll(string(data), "logo192.png", "/static/logo192.png")
+    manifestStr = strings.ReplaceAll(manifestStr, "logo512.png", "/static/logo512.png")
+    manifestStr = strings.ReplaceAll(manifestStr, "favicon.ico", "/static/favicon.ico")
+
+    w.Header().Set("Content-Type", "application/json")
+    w.Write([]byte(manifestStr))
+})
+
 	
 	// Quotes API
 	http.HandleFunc("/api/quote", quoteHandler)
