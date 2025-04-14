@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-//go:embed static/**/*
+//go:embed static/*
 var embeddedFiles embed.FS
 
 var quotes = []string{
