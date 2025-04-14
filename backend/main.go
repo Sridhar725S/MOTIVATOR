@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"path"
 )
 
 //go:embed static/*
@@ -37,14 +38,24 @@ func quoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Serve static files, but remove the "/static" prefix
-	fs := http.FileServer(http.FS(staticFiles))
-	http.Handle("/", http.StripPrefix("/", fs))
+	// Serve static files under /static/
+	staticFS := http.FileServer(http.FS(staticFiles))
+	http.Handle("/static/", http.StripPrefix("/static/", staticFS))
 
-	// API for quotes
+	// Serve index.html for root or unknown routes
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		filePath := "static/index.html"
+		data, err := staticFiles.ReadFile(filePath)
+		if err != nil {
+			http.Error(w, "Index file not found 💥", 500)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(data)
+	})
+
 	http.HandleFunc("/api/quote", quoteHandler)
 
-	// Start server
-	fmt.Println("Server is started on :8080 🚀")
+	fmt.Println("🚀 Motivator 3000 server running on :8080")
 	http.ListenAndServe(":8080", nil)
 }
