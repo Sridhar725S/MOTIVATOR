@@ -32,9 +32,9 @@ var quotes = []string{
 
 func quoteHandler(w http.ResponseWriter, r *http.Request) {
 <<<<<<< HEAD
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://motivator-73sm.onrender.com")
 =======
-	w.Header().Set("Access-Control-Allow-Origin", "https://motivator.onrender.com")
+	w.Header().Set("Access-Control-Allow-Origin", "https://motivator-73sm.onrender.com")
 >>>>>>> 210f21e9c2336dfddebd4539134bedb2d497996a
 	w.Header().Set("Content-Type", "application/json")
 	random := quotes[rand.Intn(len(quotes))]
