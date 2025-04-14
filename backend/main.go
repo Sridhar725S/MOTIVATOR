@@ -38,22 +38,14 @@ func quoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Serve static files (like main.js, CSS, etc.)
-	staticFS, _ := fs.Sub(embeddedFiles, "static")
-	fsHandler := http.FileServer(http.FS(staticFS))
+	// Serve static files, but remove the "/static" prefix
+	fs := http.FileServer(http.FS(staticFiles))
+	http.Handle("/", http.StripPrefix("/", fs))
 
-	// Handle API
+	// API for quotes
 	http.HandleFunc("/api/quote", quoteHandler)
 
-	// Serve frontend files and fallback to index.html
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			http.ServeFile(w, r, "static/index.html")
-			return
-		}
-		fsHandler.ServeHTTP(w, r)
-	})
-
-	fmt.Println("🚀 Server is running on http://localhost:8080")
+	// Start server
+	fmt.Println("Server is started on :8080 🚀")
 	http.ListenAndServe(":8080", nil)
 }
