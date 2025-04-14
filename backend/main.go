@@ -38,6 +38,14 @@ func main() {
 	// Serve the static files, and redirect non-file requests to index.html
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.FS(staticFiles))))
 	http.HandleFunc("/api/quote", quoteHandler)
+
+	// Catch-all route to serve the index.html file for non-API requests
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/quote" {
+			http.ServeFile(w, r, "./static/index.html")
+		}
+	})
+
 	fmt.Println("Server is started")
 	http.ListenAndServe(":8080", nil)
 }
