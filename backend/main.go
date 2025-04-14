@@ -35,8 +35,8 @@ func quoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fs := http.FileServer(http.FS(staticFiles))
-	http.Handle("/", http.StripPrefix("/", fs))
+	// Serve the static files, and redirect non-file requests to index.html
+	http.Handle("/", http.StripPrefix("/", http.FileServer(http.FS(staticFiles))))
 	http.HandleFunc("/api/quote", quoteHandler)
 	fmt.Println("Server is started")
 	http.ListenAndServe(":8080", nil)
