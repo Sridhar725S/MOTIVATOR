@@ -5,7 +5,7 @@ function App() {
   const [quote, setQuote] = useState("Loading wisdom...");
 
   const getQuote = async () => {
-    const res = await fetch('http://localhost:8080/api/quote');
+    const res = await fetch('https://motivator-73sm.onrender.com/api/quote');
     const data = await res.json();
     setQuote(data.quote);
   };
