@@ -38,22 +38,22 @@ func quoteHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// Serve static files correctly with MIME types
-	staticFS := http.FS(embeddedFiles)
-	fileServer := http.FileServer(staticFS)
+staticFS := http.FS(embeddedFiles)
+fileServer := http.FileServer(staticFS)
 
-	http.Handle("/static/", http.StripPrefix("/static/", fileServer))
-	http.HandleFunc("/api/quote", quoteHandler)
+http.Handle("/static/", http.StripPrefix("/static/", fileServer))
+http.HandleFunc("/api/quote", quoteHandler)
 
-	// Serve index.html for root path
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		f, err := embeddedFiles.Open("static/index.html")
-		if err != nil {
-			http.Error(w, "Index not found 💀", http.StatusInternalServerError)
-			return
-		}
-		stat, _ := f.Stat()
-		http.ServeContent(w, r, stat.Name(), stat.ModTime(), f)
-	})
+// Serve index.html at root
+http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	data, err := embeddedFiles.ReadFile("static/index.html")
+	if err != nil {
+		http.Error(w, "Index not found 💀", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.Write(data)
+})
 
 	fmt.Println("🚀 Motivator 3000 server running on :8080")
 	http.ListenAndServe(":8080", nil)
