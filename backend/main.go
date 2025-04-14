@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"math/rand"
 	"net/http"
+	"strings"
 )
 
 //go:embed static/*
@@ -31,29 +32,38 @@ var quotes = []string{
 }
 
 func quoteHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://motivator-73sm.onrender.com")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	w.Header().Set("Content-Type", "application/json")
 	random := quotes[rand.Intn(len(quotes))]
 	json.NewEncoder(w).Encode(map[string]string{"quote": random})
 }
 
 func main() {
-	// Serve static files (like main.js, CSS, etc.)
+	// Strip the "static/" prefix so paths match like /static/js/... in requests
 	staticFS, _ := fs.Sub(embeddedFiles, "static")
 	fsHandler := http.FileServer(http.FS(staticFS))
 
-	// Handle API
+	// Quotes API
 	http.HandleFunc("/api/quote", quoteHandler)
 
-	// Serve frontend files and fallback to index.html
+	// Handle static files like JS, CSS, JSON, etc.
+	http.Handle("/static/", http.StripPrefix("/static/", fsHandler))
+
+	// Fallback for SPA: Serve index.html for other routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			http.ServeFile(w, r, "static/index.html")
+		if r.URL.Path == "/" || !strings.HasPrefix(r.URL.Path, "/api/") {
+			data, err := embeddedFiles.ReadFile("static/index.html")
+			if err != nil {
+				http.Error(w, "💥 Index not found", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html")
+			w.Write(data)
 			return
 		}
-		fsHandler.ServeHTTP(w, r)
+		http.NotFound(w, r) // return 404 for other missing routes
 	})
 
-	fmt.Println("🚀 Server is running on http://localhost:8080")
+	fmt.Println("Server is started on :8080 🚀")
 	http.ListenAndServe(":8080", nil)
 }
