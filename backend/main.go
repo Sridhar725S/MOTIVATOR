@@ -2,87 +2,55 @@ package main
 
 import (
 	"embed"
-	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
-	"strings"
+	"os"
 )
 
 //go:embed static/*
-var embeddedFiles embed.FS
+var staticFiles embed.FS
 
-var quotes = []string{
-	"You got this! 💪",
-	"Keep going, code slayer!",
-	"One bug at a time.",
-	"Commit like it's hot 🔥",
-	"Break problems, not keyboards 💻✊",
-	"Drink coffee, write code ☕💻",
-	"Push it real good 🚀",
-	"Sleep is for the weak – just kidding, go rest 😴",
-	"Your future self will thank you 👨‍💻✨",
-	"One PR away from greatness 🧠",
-	"Code like nobody's debugging 👀",
-	"Every line brings you closer to done 🏁",
-	"Refactor like a rockstar 🎸",
-	"Trust the process – and Git 🌀",
-	"Keep calm and console.log() 📟",
-}
-
-func quoteHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://motivator-73sm.onrender.com")
-	w.Header().Set("Content-Type", "application/json")
-	random := quotes[rand.Intn(len(quotes))]
-	json.NewEncoder(w).Encode(map[string]string{"quote": random})
-}
-
+// serveStaticFile serves static files, including index.html.
 func serveStaticFile(w http.ResponseWriter, r *http.Request) {
-	// Check the file extension to serve correct MIME type
-	filePath := r.URL.Path
-	fileData, err := embeddedFiles.ReadFile("static" + filePath)
+	// If the request is for '/', serve the index.html file
+	if r.URL.Path == "/" {
+		data, err := staticFiles.ReadFile("static/index.html")
+		if err != nil {
+			http.Error(w, "Index not found", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(data)
+		return
+	}
+
+	// Otherwise, try to serve the requested static file
+	data, err := staticFiles.ReadFile("static" + r.URL.Path)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	// Set correct content-type for file
-	switch {
-	case strings.HasSuffix(filePath, ".css"):
+	// Set the appropriate content-type based on the file extension
+	switch path.Ext(r.URL.Path) {
+	case ".css":
 		w.Header().Set("Content-Type", "text/css")
-	case strings.HasSuffix(filePath, ".js"):
+	case ".js":
 		w.Header().Set("Content-Type", "application/javascript")
-	case strings.HasSuffix(filePath, ".html"):
+	case ".html":
 		w.Header().Set("Content-Type", "text/html")
-	case strings.HasSuffix(filePath, ".json"):
-		w.Header().Set("Content-Type", "application/json")
 	default:
-		w.Header().Set("Content-Type", "application/octet-stream") // default
+		w.Header().Set("Content-Type", "application/octet-stream")
 	}
 
-	// Serve file content
-	w.Write(fileData)
+	w.Write(data)
 }
 
 func main() {
-	// Serve static files
-	http.HandleFunc("/static/", serveStaticFile)
-
-	// Serve quotes API
-	http.HandleFunc("/api/quote", quoteHandler)
-
-	// Serve index.html at root
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		data, err := embeddedFiles.ReadFile("static/index.html")
-		if err != nil {
-			http.Error(w, "Index not found 💀", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html")
-		w.Write(data)
-	})
+	// Serve static files from the embedded "static" folder
+	http.HandleFunc("/", serveStaticFile)
 
 	// Start the server
-	fmt.Println("Server is started on :8080 🚀")
+	fmt.Println("Server started on :8080 🚀")
 	http.ListenAndServe(":8080", nil)
 }
