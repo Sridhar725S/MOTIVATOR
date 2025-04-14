@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 )
+
 //go:embed static/*
 var staticFiles embed.FS
 var quotes = []string{
@@ -35,8 +36,8 @@ func quoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Serve the static files, and redirect non-file requests to index.html
-	http.Handle("/", http.StripPrefix("/", http.FileServer(http.FS(staticFiles))))
+	fs := http.FileServer(http.FS(staticFiles))
+	http.Handle("/", fs)
 	http.HandleFunc("/api/quote", quoteHandler)
 
 	// Catch-all route to serve the index.html file for non-API requests
