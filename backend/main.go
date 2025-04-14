@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 )
-
+//go:embed static/*
 var staticFiles embed.FS
 var quotes = []string{
 	"You got this! 💪",
