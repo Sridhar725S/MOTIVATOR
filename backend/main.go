@@ -4,13 +4,12 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"math/rand"
 	"net/http"
 	"strings"
 )
 
-//go:embed static/*
+//go:embed static/**/*
 var embeddedFiles embed.FS
 
 var quotes = []string{
@@ -32,12 +31,17 @@ var quotes = []string{
 }
 
 func quoteHandler(w http.ResponseWriter, r *http.Request) {
+<<<<<<< HEAD
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+=======
+	w.Header().Set("Access-Control-Allow-Origin", "https://motivator.onrender.com")
+>>>>>>> 210f21e9c2336dfddebd4539134bedb2d497996a
 	w.Header().Set("Content-Type", "application/json")
 	random := quotes[rand.Intn(len(quotes))]
 	json.NewEncoder(w).Encode(map[string]string{"quote": random})
 }
 
+<<<<<<< HEAD
 func main() {
 	// Strip the "static/" prefix so paths match like /static/js/... in requests
 	staticFS, _ := fs.Sub(embeddedFiles, "static")
@@ -64,6 +68,54 @@ func main() {
 		http.NotFound(w, r) // return 404 for other missing routes
 	})
 
+=======
+func serveStaticFile(w http.ResponseWriter, r *http.Request) {
+	// Get the file path
+	filePath := r.URL.Path[len("/static/"):] // Remove "/static/" from the URL path
+	fileData, err := embeddedFiles.ReadFile("static/" + filePath)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Set correct content-type for file
+	switch {
+	case strings.HasSuffix(filePath, ".css"):
+		w.Header().Set("Content-Type", "text/css")
+	case strings.HasSuffix(filePath, ".js"):
+		w.Header().Set("Content-Type", "application/javascript")
+	case strings.HasSuffix(filePath, ".html"):
+		w.Header().Set("Content-Type", "text/html")
+	case strings.HasSuffix(filePath, ".json"):
+		w.Header().Set("Content-Type", "application/json")
+	default:
+		w.Header().Set("Content-Type", "application/octet-stream") // default
+	}
+
+	// Serve the file content
+	w.Write(fileData)
+}
+
+func main() {
+	// Serve static files from the embedded folder
+	http.HandleFunc("/static/", serveStaticFile)
+
+	// Serve quotes API
+	http.HandleFunc("/api/quote", quoteHandler)
+
+	// Serve index.html at root
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		data, err := embeddedFiles.ReadFile("static/index.html")
+		if err != nil {
+			http.Error(w, "Index not found 💀", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(data)
+	})
+
+	// Start the server
+>>>>>>> 210f21e9c2336dfddebd4539134bedb2d497996a
 	fmt.Println("Server is started on :8080 🚀")
 	http.ListenAndServe(":8080", nil)
 }
