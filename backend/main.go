@@ -44,6 +44,16 @@ func main() {
 	staticFS, _ := fs.Sub(embeddedFiles, "static")
 	fsHandler := http.FileServer(http.FS(staticFS))
 
+	http.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+		data, err := embeddedFiles.ReadFile("static/manifest.json")
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(data)
+	})
+	
 	// Quotes API
 	http.HandleFunc("/api/quote", quoteHandler)
 
