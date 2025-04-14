@@ -66,6 +66,16 @@ func main() {
 
 	// Handle static files like JS, CSS, JSON, etc.
 	http.Handle("/static/", http.StripPrefix("/static/", fsHandler))
+	
+        http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+	data, err := embeddedFiles.ReadFile("static/favicon.ico")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "image/x-icon")
+	w.Write(data)
+})
 
 	// Fallback for SPA: Serve index.html for other routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
